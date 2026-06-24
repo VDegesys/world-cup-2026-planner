@@ -138,6 +138,10 @@
   .venue span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .clearfx{font-family:Inter; font-size:11px; color:var(--muted); background:none; border:none; cursor:pointer; text-decoration:underline; padding:0}
   .clearfx:hover{color:var(--red)}
+  .ftpill{font-family:Inter,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--muted); background:#eef1f2; padding:2px 7px; border-radius:20px}
+  .fx.fxdone .ftscore{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px; color:var(--ink); white-space:nowrap}
+  .fx.fxdone .ftscore .x{color:#aab4b9; font-size:13px; font-weight:500}
+  .gdone{margin-left:8px; font-family:Inter,sans-serif; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--green); background:var(--green-soft); padding:2px 7px; border-radius:20px; vertical-align:3px}
 
   /* Best thirds */
   .thirds-wrap{max-width:760px}
@@ -304,9 +308,9 @@ const GROUPS={
  A:{md:{d:"Wed Jun 24",ct:"8:00 PM",et:"9:00 PM"},teams:["MEX","KOR","CZE","RSA"],
     played:[["KOR","CZE",2,1],["MEX","RSA",2,0],["CZE","RSA",1,1],["MEX","KOR",1,0]],
     finals:[{h:"CZE",a:"MEX",v:"Estadio Azteca, Mexico City"},{h:"RSA",a:"KOR",v:"Estadio BBVA, Monterrey"}]},
- B:{md:{d:"Wed Jun 24",ct:"2:00 PM",et:"3:00 PM"},teams:["CAN","SUI","BIH","QAT"],
+ B:{md:{d:"Wed Jun 24",ct:"2:00 PM",et:"3:00 PM"},teams:["CAN","SUI","BIH","QAT"],locked:true,
     played:[["CAN","BIH",1,1],["QAT","SUI",1,1],["SUI","BIH",4,1],["CAN","QAT",6,0]],
-    finals:[{h:"SUI",a:"CAN",v:"BC Place, Vancouver"},{h:"BIH",a:"QAT",v:"Lumen Field, Seattle"}]},
+    finals:[{h:"SUI",a:"CAN",v:"BC Place, Vancouver",res:[2,1]},{h:"BIH",a:"QAT",v:"Lumen Field, Seattle",res:[3,1]}]},
  C:{md:{d:"Wed Jun 24",ct:"5:00 PM",et:"6:00 PM"},teams:["BRA","MAR","SCO","HAI"],
     played:[["BRA","MAR",1,1],["HAI","SCO",0,1],["SCO","MAR",0,1],["BRA","HAI",3,0]],
     finals:[{h:"SCO",a:"BRA",v:"Hard Rock Stadium, Miami"},{h:"MAR",a:"HAI",v:"Mercedes-Benz Stadium, Atlanta"}]},
@@ -412,6 +416,7 @@ const STATE={};
 function allResults(g){
   const G=GROUPS[g]; const res=G.played.slice();
   G.finals.forEach((f,i)=>{
+    if(f.res){ res.push([f.h,f.a,f.res[0],f.res[1]]); return; }
     const s=STATE[g+"-"+i];
     if(s && s.hg!=null && s.ag!=null) res.push([f.h,f.a,s.hg,s.ag]);
   });
@@ -439,7 +444,7 @@ function tableFor(g){return buildStats(GROUPS[g].teams, allResults(g));}
 // teams confirmed out of the tournament (cannot top two, dead in best-third)
 const KNOWN_OUT=new Set(["HAI","TUR","TUN","JOR"]);
 const statusCache={};
-function groupSig(g){return GROUPS[g].finals.map((f,i)=>{const s=STATE[g+"-"+i];return s&&s.hg!=null&&s.ag!=null?s.hg+"-"+s.ag:"x";}).join("|");}
+function groupSig(g){return GROUPS[g].finals.map((f,i)=>{if(f.res)return"L"+f.res[0]+"-"+f.res[1];const s=STATE[g+"-"+i];return s&&s.hg!=null&&s.ag!=null?s.hg+"-"+s.ag:"x";}).join("|");}
 function groupStatus(g){
   const sig=groupSig(g);
   if(statusCache[g]&&statusCache[g].sig===sig) return statusCache[g].val;
@@ -449,7 +454,7 @@ function groupStatus(g){
 function computeStatus(g){
   const G=GROUPS[g]; const teams=G.teams; const MAX=6;
   const base=G.played.slice(); const unset=[];
-  G.finals.forEach((f,i)=>{const s=STATE[g+"-"+i]; if(s&&s.hg!=null&&s.ag!=null) base.push([f.h,f.a,s.hg,s.ag]); else unset.push(i);});
+  G.finals.forEach((f,i)=>{if(f.res){base.push([f.h,f.a,f.res[0],f.res[1]]);return;} const s=STATE[g+"-"+i]; if(s&&s.hg!=null&&s.ag!=null) base.push([f.h,f.a,s.hg,s.ag]); else unset.push(i);});
   const posSet={}; teams.forEach(c=>posSet[c]=new Set());
   function rec(k,res){
     if(k===unset.length){ buildStats(teams,res).forEach(r=>posSet[r.c].add(r.pos)); return; }
@@ -519,7 +524,7 @@ function thirdsRanked(){
   list.forEach((r,i)=>r.in=i<8);
   return list;
 }
-function allFinalsSet(g){return GROUPS[g].finals.every((f,i)=>{const s=STATE[g+"-"+i];return s&&s.hg!=null&&s.ag!=null;});}
+function allFinalsSet(g){return GROUPS[g].finals.every((f,i)=>{if(f.res)return true;const s=STATE[g+"-"+i];return s&&s.hg!=null&&s.ag!=null;});}
 
 /* ---------- RENDER: GROUPS ---------- */
 function railClass(pos){return pos<=2?"p"+pos:pos===3?"p3":"p4";}
@@ -537,9 +542,10 @@ function renderGroups(){
       </tr>`;
     }).join("");
     let fx=G.finals.map((f,i)=>fixtureHTML(g,i,f)).join("");
+    const locked=!!G.locked;
     card.innerHTML=`
       <div class="ghead">
-        <span class="glabel">Group ${g}</span>
+        <span class="glabel">Group ${g}${locked?'<span class="gdone">Final</span>':''}</span>
         <span class="gchip"><b>${G.md.d}</b><br>${G.md.ct} CT · ${G.md.et} ET</span>
       </div>
       <table class="tbl">
@@ -548,13 +554,14 @@ function renderGroups(){
       </table>
       ${previewHTML(g)}
       <div class="fixtures">
-        <div class="fxhead">Final games — set the score</div>
+        <div class="fxhead">${locked?"Final games — full time":"Final games — set the score"}</div>
         ${fx}
       </div>`;
     root.appendChild(card);
   });
 }
 function previewHTML(g){
+  if(GROUPS[g].locked) return "";
   const p=PREVIEWS[g]; if(!p) return "";
   const today=GROUPS[g].md.d==="Wed Jun 24";
   return `<details class="preview" open>
@@ -566,6 +573,18 @@ function previewHTML(g){
   </details>`;
 }
 function fixtureHTML(g,i,f){
+  if(f.res){
+    return `
+   <div class="fxmeta">
+     <div class="venue">📍<span>${f.v}</span></div>
+     <span class="ftpill">Full time</span>
+   </div>
+   <div class="fx fxdone">
+     <div class="side home"><span class="flag">${FLAG[f.h]}</span><span class="nm">${NAME[f.h]}</span></div>
+     <div class="vrs"><div class="ftscore">${f.res[0]} <span class="x">:</span> ${f.res[1]}</div></div>
+     <div class="side away"><span class="nm">${NAME[f.a]}</span><span class="flag">${FLAG[f.a]}</span></div>
+   </div>`;
+  }
   const key=g+"-"+i; const s=STATE[key]||{hg:null,ag:null};
   const set=s.hg!=null&&s.ag!=null;
   return `
@@ -816,6 +835,7 @@ document.getElementById("autofill").addEventListener("click",()=>{
   Object.keys(GROUPS).forEach(g=>{
     const G=GROUPS[g];
     G.finals.forEach((f,i)=>{
+      if(f.res) return;
       const t=tableFor(g); const map={}; t.forEach(r=>map[r.c]=r);
       const hp=map[f.h].pts, ap=map[f.a].pts;
       let hg,ag;
