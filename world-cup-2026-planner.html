@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matchday Planner — World Cup 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10212B; --ink2:#1B3340; --paper:#FBFAF7; --card:#FFFFFF;
+    --line:#E4E8EB; --muted:#69787F; --text:#16242C;
+    --green:#0E7A52; --green-soft:#E4F2EC;
+    --amber:#B97516; --amber-soft:#FAEFD9;
+    --red:#B23A36; --red-soft:#F7E6E4;
+    --chalk:#CDD8DE;
+    --shadow:0 1px 2px rgba(16,33,43,.06), 0 6px 22px rgba(16,33,43,.07);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--text);
+    font-family:Inter,system-ui,sans-serif; font-size:15px; line-height:1.45;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:0 18px}
+
+  /* Header */
+  header.top{
+    background:var(--ink);
+    color:var(--paper);
+    border-bottom:3px solid var(--green);
+    position:relative; overflow:hidden;
+  }
+  header.top::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 2px, transparent 2px 64px);
+  }
+  .topgrid{display:flex; align-items:flex-end; justify-content:space-between; gap:18px; padding:22px 18px 18px; position:relative}
+  .brand{display:flex; flex-direction:column; gap:2px}
+  .eyebrow{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--chalk)}
+  h1{
+    font-family:Oswald,sans-serif; font-weight:700; letter-spacing:.01em;
+    font-size:clamp(26px,4.4vw,42px); margin:0; line-height:.98; text-transform:uppercase;
+  }
+  h1 .b{color:var(--green)}
+  .subline{color:var(--chalk); font-size:13px; margin-top:4px}
+  .btn{
+    font-family:Inter,sans-serif; font-weight:600; font-size:13px;
+    border:1px solid rgba(255,255,255,.28); background:transparent; color:var(--paper);
+    padding:9px 14px; border-radius:8px; cursor:pointer; white-space:nowrap;
+  }
+  .btn:hover{background:rgba(255,255,255,.10)}
+  .btn.solid{background:var(--green); border-color:var(--green)}
+  .btn.solid:hover{background:#0c6a47}
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+  /* Nav */
+  nav.seg{position:sticky; top:0; z-index:30; background:var(--paper); border-bottom:1px solid var(--line)}
+  .seg-inner{display:flex; gap:4px; padding:10px 0; flex-wrap:wrap; align-items:center}
+  .tab{
+    font-family:Oswald,sans-serif; text-transform:uppercase; letter-spacing:.05em; font-weight:600;
+    font-size:14px; padding:8px 14px; border-radius:8px; border:1px solid transparent;
+    background:transparent; color:var(--muted); cursor:pointer;
+  }
+  .tab[aria-selected="true"]{background:var(--ink); color:var(--paper)}
+  .tab:hover:not([aria-selected="true"]){background:#eef1f0; color:var(--ink)}
+  .legend{margin-left:auto; display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted); align-items:center}
+  .dot{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px}
+  .dot.g{background:var(--green)} .dot.a{background:var(--amber)} .dot.r{background:#9aa7ad}
+
+  section.view{display:none; padding:22px 0 60px}
+  section.view.active{display:block}
+
+  /* Group grid */
+  .ctx{background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:18px; box-shadow:var(--shadow); font-size:13.5px; color:var(--muted)}
+  .ctx b{color:var(--text)}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:16px}
+  .gcard{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column}
+  .ghead{display:flex; align-items:center; gap:10px; padding:13px 15px 12px; border-bottom:1px solid var(--line); background:linear-gradient(180deg,#fff, #fbfcfc)}
+  .glabel{font-family:Oswald,sans-serif; font-weight:700; text-transform:uppercase; font-size:20px; letter-spacing:.03em; color:var(--ink)}
+  .gchip{margin-left:auto; text-align:right; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); line-height:1.3}
+  .gchip b{color:var(--text); font-weight:700}
+
+  table.tbl{width:100%; border-collapse:collapse; font-size:13.5px}
+  table.tbl th{font-family:'JetBrains Mono',monospace; font-weight:500; font-size:10.5px; letter-spacing:.04em; color:var(--muted); text-transform:uppercase; text-align:right; padding:8px 6px 6px; border-bottom:1px solid var(--line)}
+  table.tbl th.l{text-align:left; padding-left:16px}
+  table.tbl td{padding:8px 6px; border-bottom:1px solid #f0f3f4; text-align:right; font-family:'JetBrains Mono',monospace; font-weight:500}
+  table.tbl td.team{text-align:left; font-family:Inter,sans-serif; font-weight:600; padding-left:16px; position:relative; color:var(--text); white-space:normal; line-height:1.35}
+  table.tbl td.team .tn{white-space:nowrap}
+  table.tbl tr:last-child td{border-bottom:none}
+  td.pts{font-weight:700; color:var(--ink)}
+  .rail{position:absolute; left:0; top:0; bottom:0; width:5px; border-radius:0}
+  .rail.p1,.rail.p2{background:var(--green)}
+  .rail.p3{background:var(--amber)}
+  .rail.p4{background:#c3ccd1}
+  .flag{font-size:15px; margin-right:7px; vertical-align:-1px}
+  .stcell{display:inline-block; min-width:0}
+  .tag{display:inline-block; font-family:Inter,sans-serif; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; padding:2px 6px; border-radius:5px; margin-left:7px; vertical-align:1px; white-space:nowrap}
+  .tag.win{background:var(--green); color:#fff}
+  .tag.qual{background:var(--green-soft); color:var(--green)}
+  .tag.projadv{background:#fff; color:var(--green); border:1px solid #addcc6}
+  .tag.third{background:var(--amber-soft); color:var(--amber)}
+  .tag.out{background:#eef1f2; color:var(--muted)}
+  .tag.elim{background:var(--red-soft); color:var(--red)}
+  .pulse{animation:pulse .6s ease}
+  @keyframes pulse{0%{background:#fff7e6}100%{background:transparent}}
+
+  .preview{border-top:1px solid var(--line); background:#fff}
+  .preview summary{cursor:pointer; list-style:none; padding:11px 15px; font-family:Oswald,sans-serif; text-transform:uppercase; letter-spacing:.045em; font-size:12.5px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:8px}
+  .preview summary::-webkit-details-marker{display:none}
+  .preview summary::after{content:"▸"; margin-left:auto; color:var(--muted); transition:transform .15s}
+  .preview[open] summary::after{transform:rotate(90deg)}
+  .preview .today-pill{font-family:Inter,sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.03em; color:var(--green); background:var(--green-soft); padding:2px 7px; border-radius:20px}
+  .pbody{padding:2px 15px 15px}
+  .pstory{font-size:13px; color:var(--text); margin:0 0 11px; line-height:1.52}
+  .plines{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
+  .plines li{font-size:12.5px; color:var(--muted); line-height:1.5; padding-left:13px; position:relative}
+  .plines li::before{content:""; position:absolute; left:0; top:7px; width:5px; height:5px; border-radius:50%; background:var(--chalk)}
+  .plines li b{color:var(--text)}
+
+  .fixtures{padding:11px 15px 15px; border-top:2px dashed #eceff1; background:#fcfdfd}
+  .fxhead{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:2px 0 9px}
+  .fx{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; margin-bottom:10px}
+  .fx .side{display:flex; align-items:center; gap:6px; font-weight:600; font-size:13.5px; min-width:0}
+  .fx .side.away{justify-content:flex-end; text-align:right}
+  .fx .side .nm{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .stepper{display:flex; align-items:center; gap:0; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:#fff}
+  .stepper button{width:26px; height:30px; border:none; background:#fff; color:var(--ink); font-size:17px; font-weight:700; cursor:pointer; line-height:1; font-family:Inter}
+  .stepper button:hover{background:#f1f4f4}
+  .stepper button:disabled{color:#c7d0d4; cursor:not-allowed; background:#fafbfb}
+  .stepper .val{width:26px; text-align:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; color:var(--ink)}
+  .stepper .val.unset{color:#bcc6cb; font-weight:500}
+  .vrs{display:flex; flex-direction:column; align-items:center; gap:3px}
+  .vrs .x{font-family:'JetBrains Mono',monospace; color:#aab4b9; font-size:11px}
+  .fxmeta{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:-2px 0 8px}
+  .venue{font-size:11px; color:var(--muted); display:flex; align-items:center; gap:5px; min-width:0}
+  .venue span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .clearfx{font-family:Inter; font-size:11px; color:var(--muted); background:none; border:none; cursor:pointer; text-decoration:underline; padding:0}
+  .clearfx:hover{color:var(--red)}
+
+  /* Best thirds */
+  .thirds-wrap{max-width:760px}
+  .thirds-wrap p.note{color:var(--muted); font-size:13.5px; margin:0 0 16px}
+  table.thirds{width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow)}
+  table.thirds th{font-family:'JetBrains Mono',monospace; font-weight:500; font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); text-align:right; padding:11px 12px; border-bottom:1px solid var(--line); background:#fbfcfc}
+  table.thirds th.l{text-align:left}
+  table.thirds td{padding:10px 12px; border-bottom:1px solid #f0f3f4; text-align:right; font-family:'JetBrains Mono',monospace; font-weight:500}
+  table.thirds td.l{text-align:left; font-family:Inter; font-weight:600}
+  table.thirds tr.in td{background:var(--amber-soft)}
+  table.thirds tr.in td.l{box-shadow:inset 4px 0 0 var(--amber)}
+  table.thirds tr.cut td{border-bottom:2px solid var(--ink)}
+  .rk{color:var(--muted); font-family:'JetBrains Mono',monospace; width:30px}
+  .instag{font-size:10px; font-weight:700; text-transform:uppercase; color:var(--amber); margin-left:8px}
+
+  /* Bracket */
+  .round{margin-bottom:26px}
+  .rhead{display:flex; align-items:baseline; gap:12px; margin:0 0 12px; padding-bottom:8px; border-bottom:2px solid var(--ink)}
+  .rhead h2{font-family:Oswald,sans-serif; text-transform:uppercase; letter-spacing:.04em; font-weight:700; font-size:20px; margin:0; color:var(--ink)}
+  .rhead .rdate{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted)}
+  .bgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px}
+  .mcard{border:1px solid var(--line); border-radius:11px; background:#fff; box-shadow:var(--shadow); overflow:hidden}
+  .mtop{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 12px; background:var(--ink); color:var(--paper)}
+  .mno{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.05em; color:var(--chalk)}
+  .mtime{font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; text-align:right; line-height:1.25}
+  .mtime .et{color:var(--chalk); font-weight:500; font-size:10px}
+  .mbody{padding:6px 12px 10px}
+  .slot{display:flex; align-items:center; gap:8px; padding:7px 0; font-weight:600; font-size:14px}
+  .slot+.slot{border-top:1px solid #f0f3f4}
+  .slot .lab{color:var(--muted); font-weight:500; font-size:12.5px; font-style:italic}
+  .slot .proj{font-size:9.5px; font-weight:700; color:var(--green); background:var(--green-soft); padding:1px 5px; border-radius:4px; margin-left:auto; letter-spacing:.03em; text-transform:uppercase}
+  .mvenue{padding:0 12px 10px; font-size:11px; color:var(--muted); display:flex; align-items:center; gap:5px}
+  .vline{height:1px; background:#f0f3f4; margin:0 12px 8px}
+  .bracket-note{background:#fff; border:1px solid var(--line); border-left:4px solid var(--amber); border-radius:10px; padding:13px 15px; margin-bottom:22px; font-size:13px; color:var(--muted)}
+  .bracket-note b{color:var(--text)}
+
+  /* bracket tree */
+  .kotoggle{display:flex; gap:6px; margin-bottom:14px}
+  .kotoggle button{font-family:Oswald,sans-serif; text-transform:uppercase; letter-spacing:.04em; font-weight:600; font-size:13px; padding:7px 15px; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--muted); cursor:pointer}
+  .kotoggle button[aria-pressed="true"]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .tracehint{font-size:12.5px; color:var(--muted); margin:0 0 12px}
+  .tree-scroll{overflow:auto; padding:4px; border:1px solid var(--line); border-radius:12px; background:linear-gradient(180deg,#fff,#fbfcfc); box-shadow:var(--shadow)}
+  .tree{display:flex; width:max-content; padding:12px 16px}
+  .knode{display:flex; align-items:center}
+  .kchildren{display:flex; flex-direction:column; justify-content:center; position:relative}
+  .knode:not(.leaf)>.kself{margin-left:30px; position:relative}
+  .knode:not(.leaf)>.kself::before{content:""; position:absolute; left:-30px; top:50%; width:30px; height:2px; background:#cfd8dd}
+  .kchildren::after{content:""; position:absolute; right:0; top:25%; height:50%; width:2px; background:#cfd8dd}
+  .kcard{width:178px; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:#fff; box-shadow:var(--shadow); margin:7px 0; cursor:pointer; outline:2px solid transparent; transition:box-shadow .15s, outline-color .15s, opacity .15s}
+  .kcard:hover{box-shadow:0 2px 6px rgba(16,33,43,.12),0 10px 26px rgba(16,33,43,.10)}
+  .kctop{display:flex; justify-content:space-between; align-items:center; gap:6px; background:var(--ink2); color:var(--paper); padding:4px 9px}
+  .kctop .kn{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.04em; color:var(--chalk)}
+  .kctop .kt{font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700}
+  .kpp{display:flex; align-items:center; gap:6px; padding:6px 9px; font-weight:600; font-size:13px; font-family:'JetBrains Mono',monospace}
+  .kpp+.kpp{border-top:1px solid #eef2f3}
+  .kpp .flag{font-size:14px; font-family:Inter}
+  .kpp.lab{color:var(--muted); font-style:italic; font-weight:500; font-size:11.5px; font-family:Inter}
+  .kpp .proj{font-size:8.5px; font-weight:700; color:var(--green); background:var(--green-soft); padding:1px 4px; border-radius:3px; margin-left:auto; text-transform:uppercase; font-family:Inter}
+  .kcard.hl{outline-color:var(--green)}
+  .kcard.kfinal .kctop{background:var(--green)}
+  .tree.tracing .kcard:not(.hl){opacity:.38}
+  .third-card{margin-top:14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .third-card .kcard{cursor:default}
+  .third-card .kcard:hover{box-shadow:var(--shadow)}
+  .third-card .lblnote{font-size:12px; color:var(--muted)}
+
+  footer{padding:24px 0 50px; color:var(--muted); font-size:12px; border-top:1px solid var(--line)}
+  footer a{color:var(--green)}
+
+  @media (max-width:560px){
+    .topgrid{flex-direction:column; align-items:flex-start; gap:14px}
+    .legend{margin-left:0}
+    .grid{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="topgrid">
+    <div class="brand">
+      <div class="eyebrow">USA · Canada · Mexico</div>
+      <h1>Matchday <span class="b">Planner</span></h1>
+      <div class="subline">World Cup 2026 · final group games and the road to July 19. Set results, watch the bracket fill in.</div>
+    </div>
+    <div class="toolbar">
+      <button class="btn solid" id="autofill">Autofill favourites</button>
+      <button class="btn" id="clearall">Clear all</button>
+    </div>
+  </div>
+</header>
+
+<nav class="seg">
+  <div class="wrap seg-inner">
+    <button class="tab" data-view="groups" aria-selected="true">Group planner</button>
+    <button class="tab" data-view="thirds" aria-selected="false">Best thirds</button>
+    <button class="tab" data-view="bracket" aria-selected="false">Knockout bracket</button>
+    <div class="legend">
+      <span><span class="dot g"></span>Top 2 advance</span>
+      <span><span class="dot a"></span>3rd place race</span>
+      <span><span class="dot r"></span>Bottom</span>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <section class="view active" id="view-groups">
+    <div class="ctx">
+      All standings reflect results through Tue, Jun 24. Each group has two simultaneous final games left. Set scores below to project every finishing position. Tiebreakers follow FIFA order: points, then goal difference, then goals scored, then head to head.
+      <div style="margin-top:9px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <span style="font-size:12px;color:var(--text);font-weight:600">Tags:</span>
+        <span class="tag win">Won group</span><span style="font-size:11.5px">first place clinched</span>
+        <span class="tag qual">Through</span><span style="font-size:11.5px">top two clinched</span>
+        <span class="tag projadv">Proj. advance</span><span style="font-size:11.5px">on track but not yet locked</span>
+        <span class="tag third">3rd race</span><span style="font-size:11.5px">alive via best thirds</span>
+        <span class="tag elim">Eliminated</span><span style="font-size:11.5px">out</span>
+      </div>
+    </div>
+    <div class="grid" id="groups"></div>
+  </section>
+
+  <section class="view" id="view-thirds">
+    <div class="thirds-wrap">
+      <h2 style="font-family:Oswald;text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px">Best third-placed teams</h2>
+      <p class="note">Eight of the twelve third-placed teams advance to the Round of 32. They are ranked across all groups by points, then goal difference, then goals scored. The line below 8th is the cut. Update group results to see who slips in.</p>
+      <div id="thirds"></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-bracket">
+    <div class="bracket-note">
+      <b>How to read this:</b> winners and runners-up fill in automatically from your group results (a <span style="color:var(--green);font-weight:700">PROJ</span> tag means it follows the current scenario and is not yet mathematically locked). Third-place slots stay as labels, because which specific third-placed team lands in each slot depends on FIFA's fixed lookup of the eight groups that qualify. All times shown in <b>Central (CT)</b> with Eastern (ET) beneath.
+    </div>
+    <div class="kotoggle">
+      <button data-ko="tree" aria-pressed="true">Bracket</button>
+      <button data-ko="schedule" aria-pressed="false">Schedule</button>
+    </div>
+    <div id="bracketTree"></div>
+    <div id="bracketSchedule" style="display:none"></div>
+  </section>
+</div>
+
+<footer class="wrap">
+  Times and venues per FIFA / FOX schedule. Final at MetLife Stadium, East Rutherford NJ on Sun, Jul 19, 2:00 PM CT. This is a planning sandbox; results are hypothetical until played.
+</footer>
+
+<script>
+/* ---------- DATA ---------- */
+const FLAG={MEX:"🇲🇽",KOR:"🇰🇷",CZE:"🇨🇿",RSA:"🇿🇦",CAN:"🇨🇦",SUI:"🇨🇭",BIH:"🇧🇦",QAT:"🇶🇦",
+BRA:"🇧🇷",MAR:"🇲🇦",SCO:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",HAI:"🇭🇹",USA:"🇺🇸",AUS:"🇦🇺",PAR:"🇵🇾",TUR:"🇹🇷",
+GER:"🇩🇪",CIV:"🇨🇮",ECU:"🇪🇨",CUW:"🇨🇼",NED:"🇳🇱",JPN:"🇯🇵",SWE:"🇸🇪",TUN:"🇹🇳",
+EGY:"🇪🇬",IRN:"🇮🇷",BEL:"🇧🇪",NZL:"🇳🇿",ESP:"🇪🇸",URU:"🇺🇾",CPV:"🇨🇻",KSA:"🇸🇦",
+FRA:"🇫🇷",NOR:"🇳🇴",SEN:"🇸🇳",IRQ:"🇮🇶",ARG:"🇦🇷",AUT:"🇦🇹",DZA:"🇩🇿",JOR:"🇯🇴",
+COL:"🇨🇴",POR:"🇵🇹",COD:"🇨🇩",UZB:"🇺🇿",ENG:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",GHA:"🇬🇭",CRO:"🇭🇷",PAN:"🇵🇦"};
+const NAME={MEX:"Mexico",KOR:"South Korea",CZE:"Czechia",RSA:"South Africa",CAN:"Canada",SUI:"Switzerland",BIH:"Bosnia & Herz.",QAT:"Qatar",
+BRA:"Brazil",MAR:"Morocco",SCO:"Scotland",HAI:"Haiti",USA:"USA",AUS:"Australia",PAR:"Paraguay",TUR:"Türkiye",
+GER:"Germany",CIV:"Ivory Coast",ECU:"Ecuador",CUW:"Curaçao",NED:"Netherlands",JPN:"Japan",SWE:"Sweden",TUN:"Tunisia",
+EGY:"Egypt",IRN:"Iran",BEL:"Belgium",NZL:"New Zealand",ESP:"Spain",URU:"Uruguay",CPV:"Cape Verde",KSA:"Saudi Arabia",
+FRA:"France",NOR:"Norway",SEN:"Senegal",IRQ:"Iraq",ARG:"Argentina",AUT:"Austria",DZA:"Algeria",JOR:"Jordan",
+COL:"Colombia",POR:"Portugal",COD:"DR Congo",UZB:"Uzbekistan",ENG:"England",GHA:"Ghana",CRO:"Croatia",PAN:"Panama"};
+
+// played results: [home, away, homeGoals, awayGoals]
+const GROUPS={
+ A:{md:{d:"Wed Jun 24",ct:"8:00 PM",et:"9:00 PM"},teams:["MEX","KOR","CZE","RSA"],
+    played:[["KOR","CZE",2,1],["MEX","RSA",2,0],["CZE","RSA",1,1],["MEX","KOR",1,0]],
+    finals:[{h:"CZE",a:"MEX",v:"Estadio Azteca, Mexico City"},{h:"RSA",a:"KOR",v:"Estadio BBVA, Monterrey"}]},
+ B:{md:{d:"Wed Jun 24",ct:"2:00 PM",et:"3:00 PM"},teams:["CAN","SUI","BIH","QAT"],
+    played:[["CAN","BIH",1,1],["QAT","SUI",1,1],["SUI","BIH",4,1],["CAN","QAT",6,0]],
+    finals:[{h:"SUI",a:"CAN",v:"BC Place, Vancouver"},{h:"BIH",a:"QAT",v:"Lumen Field, Seattle"}]},
+ C:{md:{d:"Wed Jun 24",ct:"5:00 PM",et:"6:00 PM"},teams:["BRA","MAR","SCO","HAI"],
+    played:[["BRA","MAR",1,1],["HAI","SCO",0,1],["SCO","MAR",0,1],["BRA","HAI",3,0]],
+    finals:[{h:"SCO",a:"BRA",v:"Hard Rock Stadium, Miami"},{h:"MAR",a:"HAI",v:"Mercedes-Benz Stadium, Atlanta"}]},
+ D:{md:{d:"Thu Jun 25",ct:"9:00 PM",et:"10:00 PM"},teams:["USA","AUS","PAR","TUR"],
+    played:[["USA","PAR",4,1],["AUS","TUR",2,0],["USA","AUS",2,0],["TUR","PAR",0,1]],
+    finals:[{h:"TUR",a:"USA",v:"SoFi Stadium, Inglewood"},{h:"PAR",a:"AUS",v:"Levi's Stadium, Santa Clara"}]},
+ E:{md:{d:"Thu Jun 25",ct:"3:00 PM",et:"4:00 PM"},teams:["GER","CIV","ECU","CUW"],
+    played:[["GER","CUW",7,1],["CIV","ECU",1,0],["GER","CIV",2,1],["ECU","CUW",0,0]],
+    finals:[{h:"CUW",a:"CIV",v:"Lincoln Financial Field, Philadelphia"},{h:"ECU",a:"GER",v:"MetLife Stadium, East Rutherford"}]},
+ F:{md:{d:"Thu Jun 25",ct:"6:00 PM",et:"7:00 PM"},teams:["NED","JPN","SWE","TUN"],
+    played:[["NED","JPN",2,2],["SWE","TUN",5,1],["NED","SWE",5,1],["JPN","TUN",4,0]],
+    finals:[{h:"JPN",a:"SWE",v:"AT&T Stadium, Arlington"},{h:"TUN",a:"NED",v:"Arrowhead Stadium, Kansas City"}]},
+ G:{md:{d:"Fri Jun 26",ct:"10:00 PM",et:"11:00 PM"},teams:["EGY","IRN","BEL","NZL"],
+    played:[["BEL","EGY",1,1],["IRN","NZL",2,2],["EGY","NZL",3,1],["BEL","IRN",0,0]],
+    finals:[{h:"EGY",a:"IRN",v:"Lumen Field, Seattle"},{h:"NZL",a:"BEL",v:"BC Place, Vancouver"}]},
+ H:{md:{d:"Fri Jun 26",ct:"7:00 PM",et:"8:00 PM"},teams:["ESP","URU","CPV","KSA"],
+    played:[["ESP","CPV",0,0],["KSA","URU",1,1],["ESP","KSA",4,0],["URU","CPV",2,2]],
+    finals:[{h:"CPV",a:"KSA",v:"NRG Stadium, Houston"},{h:"URU",a:"ESP",v:"Estadio Akron, Guadalajara"}]},
+ I:{md:{d:"Fri Jun 26",ct:"2:00 PM",et:"3:00 PM"},teams:["FRA","NOR","SEN","IRQ"],
+    played:[["FRA","SEN",3,1],["IRQ","NOR",1,4],["FRA","IRQ",3,0],["NOR","SEN",3,2]],
+    finals:[{h:"NOR",a:"FRA",v:"Gillette Stadium, Foxborough"},{h:"SEN",a:"IRQ",v:"BMO Field, Toronto"}]},
+ J:{md:{d:"Sat Jun 27",ct:"9:00 PM",et:"10:00 PM"},teams:["ARG","AUT","DZA","JOR"],
+    played:[["ARG","DZA",3,0],["AUT","JOR",3,1],["ARG","AUT",2,0],["JOR","DZA",1,2]],
+    finals:[{h:"DZA",a:"AUT",v:"Arrowhead Stadium, Kansas City"},{h:"JOR",a:"ARG",v:"AT&T Stadium, Arlington"}]},
+ K:{md:{d:"Sat Jun 27",ct:"6:30 PM",et:"7:30 PM"},teams:["COL","POR","COD","UZB"],
+    played:[["COL","UZB",3,1],["POR","COD",1,1],["COL","COD",1,0],["POR","UZB",5,0]],
+    finals:[{h:"COL",a:"POR",v:"Hard Rock Stadium, Miami"},{h:"COD",a:"UZB",v:"Mercedes-Benz Stadium, Atlanta"}]},
+ L:{md:{d:"Sat Jun 27",ct:"4:00 PM",et:"5:00 PM"},teams:["ENG","GHA","CRO","PAN"],
+    played:[["ENG","CRO",4,2],["GHA","PAN",1,0],["ENG","GHA",0,0],["CRO","PAN",1,0]],
+    finals:[{h:"PAN",a:"ENG",v:"MetLife Stadium, East Rutherford"},{h:"CRO",a:"GHA",v:"Lincoln Financial Field, Philadelphia"}]}
+};
+
+// per-group preview: storyline + realistic scenarios / thresholds
+const PREVIEWS={
+ A:{story:"The hosts are cruising. Mexico are unbeaten without conceding and have already locked up the group, so the live drama is the fight for second up in Monterrey.",
+    lines:[
+     `${FLAG.MEX} <b>Mexico</b> are through as group winners no matter what. Even a loss keeps them top thanks to the head to head with Korea.`,
+     `${FLAG.KOR} <b>South Korea</b> reach the knockouts with a win or a draw against South Africa. A point is almost certainly enough for second.`,
+     `${FLAG.RSA} <b>South Africa</b> must beat South Korea to jump into second, otherwise they are out.`,
+     `${FLAG.CZE} <b>Czechia</b> need to win at the Azteca and have South Korea lose, then hope the goal difference falls their way. A long shot.`]},
+ B:{story:"Both Canada and Switzerland are all but through, so their meeting in Vancouver is really about who tops the group. Canada's 6-0 demolition of Qatar handed them a big goal-difference cushion.",
+    lines:[
+     `${FLAG.CAN} <b>Canada</b> win the group with a win or a draw. Their +6 goal difference means even a draw is enough for first.`,
+     `${FLAG.SUI} <b>Switzerland</b> must beat Canada to top the group. Any draw leaves them second, still safely through.`,
+     `${FLAG.BIH} ${FLAG.QAT} <b>Bosnia</b> and <b>Qatar</b> are playing for pride and a first win. Neither can realistically reach the top two or the best-third places.`]},
+ C:{story:"The pick of the day. Scotland chase a first ever knockout berth against a Brazil side welcoming Neymar back for his first appearance of the tournament. Brazil lead Morocco only on goal difference after their 1-1 draw.",
+    lines:[
+     `${FLAG.SCO} <b>Scotland</b> guarantee a top-two place by beating Brazil, and a win could even shove Brazil down to third. A draw most likely means sweating the best-third table on 4 points (around 70 percent per Opta). A loss leaves them in real danger on 3.`,
+     `${FLAG.BRA} <b>Brazil</b> go through with a win or a draw. To stay top they must match Morocco's result or protect their two-goal cushion.`,
+     `${FLAG.MAR} <b>Morocco</b> advance with a win or a draw over Haiti. To steal first they must better Brazil's result, or beat Haiti by enough to overturn Brazil's two-goal lead in goal difference, then goals scored.`]},
+ D:{story:"USA have stormed through as group winners and Türkiye are out, so the USA game is a free hit. Second place is a straight duel between Australia and Paraguay, who meet head to head.",
+    lines:[
+     `${FLAG.USA} <b>USA</b> are already group winners and will rotate against an eliminated Türkiye side.`,
+     `${FLAG.AUS} <b>Australia</b> reach the knockouts with a win or a draw against Paraguay. Their goal-difference edge means a point is enough for second.`,
+     `${FLAG.PAR} <b>Paraguay</b> must beat Australia to grab second. A draw sends them out, though it could leave them in the best-third mix.`]},
+ E:{story:"Germany's firepower (seven past Curaçao) has the group sewn up. Ivory Coast hold second for now, but Curaçao can flip it.",
+    lines:[
+     `${FLAG.GER} <b>Germany</b> are through as winners and just need to avoid a collapse against Ecuador to stay top.`,
+     `${FLAG.CIV} <b>Ivory Coast</b> take second with a win or a draw against Curaçao.`,
+     `${FLAG.CUW} <b>Curaçao</b>, the smallest nation ever at a World Cup, must beat Ivory Coast to leap into second.`,
+     `${FLAG.ECU} <b>Ecuador</b>'s only route is the near-impossible: beat group winners Germany and hope Ivory Coast slip up.`]},
+ F:{story:"The Netherlands and Japan are level on points and goal difference, split only by a single goal scored, and both are in pole position. They do not meet again, so it is about who wins their last game.",
+    lines:[
+     `${FLAG.NED} <b>Netherlands</b> top the group by beating Tunisia. If they and Japan both win, first comes down to goal difference, then goals scored, where the Dutch lead by one.`,
+     `${FLAG.JPN} <b>Japan</b> reach the knockouts with a win or a draw against Sweden, and can top the group with a big win.`,
+     `${FLAG.SWE} <b>Sweden</b> must beat Japan to climb into the top two, and even then will be checking the Dutch result.`]},
+ G:{story:"The tightest group on the board. Egypt lead the way, but Belgium have stumbled to two draws and second place is wide open.",
+    lines:[
+     `${FLAG.EGY} <b>Egypt</b> reach the knockouts with a win or a draw against Iran, and top the group with a win.`,
+     `${FLAG.BEL} <b>Belgium</b> need to beat New Zealand to feel safe. Their two draws leave them exposed if Iran win.`,
+     `${FLAG.IRN} <b>Iran</b> can vault the group with a win over Egypt. A draw keeps them alive but dependent on the Belgium result.`,
+     `${FLAG.NZL} <b>New Zealand</b> must beat Belgium to have any chance, most likely through the best-third places.`]},
+ H:{story:"Spain control the group and have a clear incentive to win it: topping the group steers them away from Argentina in the Round of 32. Cape Verde, who held Spain to a draw, are the surprise package.",
+    lines:[
+     `${FLAG.ESP} <b>Spain</b> top the group with a win or a draw against Uruguay, which would let them avoid Argentina's side of the bracket.`,
+     `${FLAG.CPV} <b>Cape Verde</b> seize second by beating Saudi Arabia, a fairytale for the debutants.`,
+     `${FLAG.URU} <b>Uruguay</b> most likely must beat Spain to be sure of advancing. A draw leaves them at the mercy of the Cape Verde result.`]},
+ I:{story:"Both France and Norway are already through, so Foxborough is a blockbuster purely for first place. France lead on goal difference, Norway on goals scored, and Mbappé has four goals and counting.",
+    lines:[
+     `${FLAG.FRA} <b>France</b> top the group with a win or a draw. Their superior goal difference settles a draw in their favour.`,
+     `${FLAG.NOR} <b>Norway</b> must beat France to top the group and back up their dark-horse billing.`,
+     `${FLAG.SEN} ${FLAG.IRQ} <b>Senegal</b> and <b>Iraq</b> are out of the automatic places and realistically playing for pride.`]},
+ J:{story:"Argentina and Messi have already won the group, so Argentina versus Jordan is a dead rubber. The real fixture is a winner-takes-second showdown between Austria and Algeria.",
+    lines:[
+     `${FLAG.ARG} <b>Argentina</b> are through as winners and can rotate against an eliminated Jordan.`,
+     `${FLAG.AUT} ${FLAG.DZA} <b>Austria</b> and <b>Algeria</b> meet head to head for second. The winner advances; a draw sends Austria through on goal difference, so Algeria must win.`]},
+ K:{story:"Colombia are flying and already safe, and Portugal, with Ronaldo rewriting the record books, are essentially through too. Their meeting in Miami is about first place.",
+    lines:[
+     `${FLAG.COL} <b>Colombia</b> top the group with a win or a draw against Portugal.`,
+     `${FLAG.POR} <b>Portugal</b> must beat Colombia to leapfrog them for first. Either way they are all but qualified.`,
+     `${FLAG.COD} <b>DR Congo</b> are mathematically alive but would need to beat Uzbekistan and get plenty of help.`]},
+ L:{story:"Tuchel's England sit top and should confirm it against an already-eliminated Panama. Ghana, level with England after a battling goalless draw, face a Croatia side fighting for its tournament life.",
+    lines:[
+     `${FLAG.ENG} <b>England</b> should top the group by beating Panama. Only a slip, with Ghana winning big, would cost them first.`,
+     `${FLAG.GHA} <b>Ghana</b> advance with a win or a draw against Croatia.`,
+     `${FLAG.CRO} <b>Croatia</b> and Modrić must beat Ghana to go through. Anything less and they are out.`]}
+};
+
+// scenario scores keyed "GROUP-0" / "GROUP-1" -> {hg, ag}
+const STATE={};
+
+/* ---------- ENGINE ---------- */
+function allResults(g){
+  const G=GROUPS[g]; const res=G.played.slice();
+  G.finals.forEach((f,i)=>{
+    const s=STATE[g+"-"+i];
+    if(s && s.hg!=null && s.ag!=null) res.push([f.h,f.a,s.hg,s.ag]);
+  });
+  return res;
+}
+function blank(){return {p:0,w:0,d:0,l:0,gf:0,ga:0,gd:0,pts:0};}
+function buildStats(teams,res){
+  const t={}; teams.forEach(c=>t[c]=blank());
+  res.forEach(([h,a,hg,ag])=>{
+    if(!t[h]||!t[a]) return;
+    t[h].p++;t[a].p++; t[h].gf+=hg;t[h].ga+=ag; t[a].gf+=ag;t[a].ga+=hg;
+    if(hg>ag){t[h].w++;t[a].l++;t[h].pts+=3;}
+    else if(hg<ag){t[a].w++;t[h].l++;t[a].pts+=3;}
+    else {t[h].d++;t[a].d++;t[h].pts++;t[a].pts++;}
+  });
+  teams.forEach(c=>t[c].gd=t[c].gf-t[c].ga);
+  let arr=teams.map(c=>({c,...t[c]}));
+  arr.sort(cmpOverall);
+  arr=resolveH2H(arr,res);
+  arr.forEach((r,i)=>r.pos=i+1);
+  return arr;
+}
+function tableFor(g){return buildStats(GROUPS[g].teams, allResults(g));}
+
+// teams confirmed out of the tournament (cannot top two, dead in best-third)
+const KNOWN_OUT=new Set(["HAI","TUR","TUN","JOR"]);
+const statusCache={};
+function groupSig(g){return GROUPS[g].finals.map((f,i)=>{const s=STATE[g+"-"+i];return s&&s.hg!=null&&s.ag!=null?s.hg+"-"+s.ag:"x";}).join("|");}
+function groupStatus(g){
+  const sig=groupSig(g);
+  if(statusCache[g]&&statusCache[g].sig===sig) return statusCache[g].val;
+  const val=computeStatus(g); statusCache[g]={sig,val}; return val;
+}
+// enumerate all completions of the unset final games to find each team's reachable positions
+function computeStatus(g){
+  const G=GROUPS[g]; const teams=G.teams; const MAX=6;
+  const base=G.played.slice(); const unset=[];
+  G.finals.forEach((f,i)=>{const s=STATE[g+"-"+i]; if(s&&s.hg!=null&&s.ag!=null) base.push([f.h,f.a,s.hg,s.ag]); else unset.push(i);});
+  const posSet={}; teams.forEach(c=>posSet[c]=new Set());
+  function rec(k,res){
+    if(k===unset.length){ buildStats(teams,res).forEach(r=>posSet[r.c].add(r.pos)); return; }
+    const f=G.finals[unset[k]];
+    for(let h=0;h<=MAX;h++)for(let a=0;a<=MAX;a++){ res.push([f.h,f.a,h,a]); rec(k+1,res); res.pop(); }
+  }
+  rec(0,base.slice());
+  const out={};
+  teams.forEach(c=>{ const ps=[...posSet[c]]; const mn=Math.min(...ps), mx=Math.max(...ps);
+    out[c]={minPos:mn,maxPos:mx,alwaysWin:(mn===1&&mx===1),alwaysTop2:(mx<=2)}; });
+  return out;
+}
+function tagFor(c,st,pos){
+  if(KNOWN_OUT.has(c)) return {cls:"elim",txt:"Eliminated"};
+  if(st.alwaysWin)    return {cls:"win", txt:"Won group"};
+  if(st.alwaysTop2)   return {cls:"qual",txt:"Through"};
+  if(st.minPos>=4)    return {cls:"elim",txt:"Eliminated"};
+  if(pos===1) return {cls:"projadv",txt:"Proj. winner"};
+  if(pos===2) return {cls:"projadv",txt:"Proj. advance"};
+  if(pos===3) return {cls:"third",  txt:"3rd race"};
+  return {cls:"out",txt:"Proj. out"};
+}
+function cmpOverall(x,y){
+  if(y.pts!==x.pts)return y.pts-x.pts;
+  if(y.gd!==x.gd)return y.gd-x.gd;
+  if(y.gf!==x.gf)return y.gf-x.gf;
+  return 0;
+}
+function resolveH2H(arr,res){
+  const out=[]; let i=0;
+  while(i<arr.length){
+    let j=i+1;
+    while(j<arr.length && arr[j].pts===arr[i].pts && arr[j].gd===arr[i].gd && arr[j].gf===arr[i].gf) j++;
+    const run=arr.slice(i,j);
+    if(run.length>1){
+      const set=new Set(run.map(r=>r.c));
+      const mini={}; run.forEach(r=>mini[r.c]={pts:0,gd:0,gf:0});
+      res.forEach(([h,a,hg,ag])=>{
+        if(set.has(h)&&set.has(a)){
+          mini[h].gf+=hg;mini[h].gd+=hg-ag; mini[a].gf+=ag;mini[a].gd+=ag-hg;
+          if(hg>ag)mini[h].pts+=3; else if(hg<ag)mini[a].pts+=3; else {mini[h].pts++;mini[a].pts++;}
+        }
+      });
+      run.sort((x,y)=>{
+        const mx=mini[x.c],my=mini[y.c];
+        if(my.pts!==mx.pts)return my.pts-mx.pts;
+        if(my.gd!==mx.gd)return my.gd-mx.gd;
+        if(my.gf!==mx.gf)return my.gf-mx.gf;
+        return 0;
+      });
+    }
+    run.forEach(r=>out.push(r));
+    i=j;
+  }
+  return out;
+}
+function winner(g){return tableFor(g)[0];}
+function runnerUp(g){return tableFor(g)[1];}
+function thirdsRanked(){
+  const list=Object.keys(GROUPS).map(g=>{const t=tableFor(g)[2]; return {g,...t};});
+  list.sort((x,y)=>{
+    if(y.pts!==x.pts)return y.pts-x.pts;
+    if(y.gd!==x.gd)return y.gd-x.gd;
+    if(y.gf!==x.gf)return y.gf-x.gf;
+    return x.g.localeCompare(y.g);
+  });
+  list.forEach((r,i)=>r.in=i<8);
+  return list;
+}
+function allFinalsSet(g){return GROUPS[g].finals.every((f,i)=>{const s=STATE[g+"-"+i];return s&&s.hg!=null&&s.ag!=null;});}
+
+/* ---------- RENDER: GROUPS ---------- */
+function railClass(pos){return pos<=2?"p"+pos:pos===3?"p3":"p4";}
+function renderGroups(){
+  const root=document.getElementById("groups"); root.innerHTML="";
+  Object.keys(GROUPS).forEach(g=>{
+    const G=GROUPS[g]; const arr=tableFor(g); const st=groupStatus(g);
+    const card=document.createElement("div"); card.className="gcard";
+    let rows=arr.map(r=>{
+      const tg=tagFor(r.c, st[r.c], r.pos);
+      const tag=`<span class="tag ${tg.cls}">${tg.txt}</span>`;
+      return `<tr>
+        <td class="team"><span class="rail ${railClass(r.pos)}"></span><span class="flag">${FLAG[r.c]}</span><span class="tn">${NAME[r.c]}</span>${tag}</td>
+        <td>${r.p}</td><td>${r.gf}:${r.ga}</td><td>${r.gd>0?"+":""}${r.gd}</td><td class="pts">${r.pts}</td>
+      </tr>`;
+    }).join("");
+    let fx=G.finals.map((f,i)=>fixtureHTML(g,i,f)).join("");
+    card.innerHTML=`
+      <div class="ghead">
+        <span class="glabel">Group ${g}</span>
+        <span class="gchip"><b>${G.md.d}</b><br>${G.md.ct} CT · ${G.md.et} ET</span>
+      </div>
+      <table class="tbl">
+        <thead><tr><th class="l">Team</th><th>P</th><th>GF:GA</th><th>GD</th><th>Pts</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${previewHTML(g)}
+      <div class="fixtures">
+        <div class="fxhead">Final games — set the score</div>
+        ${fx}
+      </div>`;
+    root.appendChild(card);
+  });
+}
+function previewHTML(g){
+  const p=PREVIEWS[g]; if(!p) return "";
+  const today=GROUPS[g].md.d==="Wed Jun 24";
+  return `<details class="preview" open>
+    <summary>Preview &amp; what's at stake ${today?'<span class="today-pill">Today</span>':''}</summary>
+    <div class="pbody">
+      <p class="pstory">${p.story}</p>
+      <ul class="plines">${p.lines.map(l=>`<li>${l}</li>`).join("")}</ul>
+    </div>
+  </details>`;
+}
+function fixtureHTML(g,i,f){
+  const key=g+"-"+i; const s=STATE[key]||{hg:null,ag:null};
+  const set=s.hg!=null&&s.ag!=null;
+  return `
+   <div class="fxmeta">
+     <div class="venue">📍<span>${f.v}</span></div>
+     ${set?`<button class="clearfx" data-clear="${key}">clear</button>`:`<span style="font-size:11px;color:#bcc6cb">vs</span>`}
+   </div>
+   <div class="fx">
+     <div class="side home"><span class="flag">${FLAG[f.h]}</span><span class="nm">${NAME[f.h]}</span></div>
+     <div class="vrs">
+       <div style="display:flex;gap:6px">
+         ${stepperHTML(key,"hg",s.hg)}
+         <span class="x" style="align-self:center">:</span>
+         ${stepperHTML(key,"ag",s.ag)}
+       </div>
+     </div>
+     <div class="side away"><span class="nm">${NAME[f.a]}</span><span class="flag">${FLAG[f.a]}</span></div>
+   </div>`;
+}
+function stepperHTML(key,which,val){
+  const unset=val==null; const v=unset?0:val;
+  return `<div class="stepper" data-key="${key}" data-which="${which}">
+    <button data-act="dec" ${v<=0?"disabled":""}>−</button>
+    <span class="val ${unset?"unset":""}">${unset?"–":val}</span>
+    <button data-act="inc">+</button>
+  </div>`;
+}
+
+/* ---------- RENDER: THIRDS ---------- */
+function renderThirds(){
+  const root=document.getElementById("thirds");
+  const list=thirdsRanked();
+  let rows=list.map((r,i)=>{
+    const cls=r.in?"in":"out"; const cut=i===7?"cut":"";
+    return `<tr class="${cls} ${cut}">
+      <td class="rk">${i+1}</td>
+      <td class="l"><span class="flag">${FLAG[r.c]}</span>${NAME[r.c]} <span style="color:var(--muted);font-weight:500">(${r.g})</span>${r.in?'<span class="instag">In</span>':''}</td>
+      <td>${r.pts}</td><td>${r.gd>0?"+":""}${r.gd}</td><td>${r.gf}</td>
+    </tr>`;
+  }).join("");
+  root.innerHTML=`<table class="thirds">
+    <thead><tr><th class="l" colspan="2">Third-placed team</th><th>Pts</th><th>GD</th><th>GF</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+/* ---------- RENDER: BRACKET ---------- */
+const R32=[
+ {n:73,date:"Sun Jun 28",ct:"2:00 PM",et:"3:00 PM",v:"SoFi Stadium, Inglewood",s:[{t:"RU",g:"A"},{t:"RU",g:"B"}]},
+ {n:76,date:"Mon Jun 29",ct:"12:00 PM",et:"1:00 PM",v:"NRG Stadium, Houston",s:[{t:"W",g:"C"},{t:"RU",g:"F"}]},
+ {n:74,date:"Mon Jun 29",ct:"3:30 PM",et:"4:30 PM",v:"Gillette Stadium, Foxborough",s:[{t:"W",g:"E"},{t:"3",l:"3rd · A/B/C/D/F"}]},
+ {n:75,date:"Mon Jun 29",ct:"8:00 PM",et:"9:00 PM",v:"Estadio BBVA, Monterrey",s:[{t:"W",g:"F"},{t:"RU",g:"C"}]},
+ {n:78,date:"Tue Jun 30",ct:"12:00 PM",et:"1:00 PM",v:"AT&T Stadium, Arlington",s:[{t:"RU",g:"E"},{t:"RU",g:"I"}]},
+ {n:77,date:"Tue Jun 30",ct:"4:00 PM",et:"5:00 PM",v:"MetLife Stadium, East Rutherford",s:[{t:"W",g:"I"},{t:"3",l:"3rd · C/D/F/G/H"}]},
+ {n:79,date:"Tue Jun 30",ct:"8:00 PM",et:"9:00 PM",v:"Estadio Azteca, Mexico City",s:[{t:"W",g:"A"},{t:"3",l:"3rd · C/E/F/H/I"}]},
+ {n:80,date:"Wed Jul 1",ct:"11:00 AM",et:"12:00 PM",v:"Mercedes-Benz Stadium, Atlanta",s:[{t:"W",g:"L"},{t:"3",l:"3rd · E/H/I/J/K"}]},
+ {n:82,date:"Wed Jul 1",ct:"3:00 PM",et:"4:00 PM",v:"Lumen Field, Seattle",s:[{t:"W",g:"G"},{t:"3",l:"3rd · A/E/H/I/J"}]},
+ {n:81,date:"Wed Jul 1",ct:"7:00 PM",et:"8:00 PM",v:"Levi's Stadium, Santa Clara",s:[{t:"W",g:"D"},{t:"3",l:"3rd · B/E/F/I/J"}]},
+ {n:84,date:"Thu Jul 2",ct:"2:00 PM",et:"3:00 PM",v:"SoFi Stadium, Inglewood",s:[{t:"W",g:"H"},{t:"RU",g:"J"}]},
+ {n:83,date:"Thu Jul 2",ct:"6:00 PM",et:"7:00 PM",v:"BMO Field, Toronto",s:[{t:"RU",g:"K"},{t:"RU",g:"L"}]},
+ {n:85,date:"Thu Jul 2",ct:"10:00 PM",et:"11:00 PM",v:"BC Place, Vancouver",s:[{t:"W",g:"B"},{t:"3",l:"3rd · E/F/G/I/J"}]},
+ {n:88,date:"Fri Jul 3",ct:"1:00 PM",et:"2:00 PM",v:"AT&T Stadium, Arlington",s:[{t:"RU",g:"D"},{t:"RU",g:"G"}]},
+ {n:86,date:"Fri Jul 3",ct:"5:00 PM",et:"6:00 PM",v:"Hard Rock Stadium, Miami",s:[{t:"W",g:"J"},{t:"RU",g:"H"}]},
+ {n:87,date:"Fri Jul 3",ct:"8:30 PM",et:"9:30 PM",v:"Arrowhead Stadium, Kansas City",s:[{t:"W",g:"K"},{t:"3",l:"3rd · D/E/I/J/L"}]}
+];
+const R16=[
+ {n:90,date:"Sat Jul 4",ct:"12:00 PM",et:"1:00 PM",v:"NRG Stadium, Houston",s:["W73","W75"]},
+ {n:89,date:"Sat Jul 4",ct:"4:00 PM",et:"5:00 PM",v:"Lincoln Financial Field, Philadelphia",s:["W74","W77"]},
+ {n:91,date:"Sun Jul 5",ct:"3:00 PM",et:"4:00 PM",v:"MetLife Stadium, East Rutherford",s:["W76","W78"]},
+ {n:92,date:"Sun Jul 5",ct:"7:00 PM",et:"8:00 PM",v:"Estadio Azteca, Mexico City",s:["W79","W80"]},
+ {n:93,date:"Mon Jul 6",ct:"2:00 PM",et:"3:00 PM",v:"AT&T Stadium, Arlington",s:["W83","W84"]},
+ {n:94,date:"Mon Jul 6",ct:"7:00 PM",et:"8:00 PM",v:"Lumen Field, Seattle",s:["W81","W82"]},
+ {n:95,date:"Tue Jul 7",ct:"11:00 AM",et:"12:00 PM",v:"Mercedes-Benz Stadium, Atlanta",s:["W86","W88"]},
+ {n:96,date:"Tue Jul 7",ct:"3:00 PM",et:"4:00 PM",v:"BC Place, Vancouver",s:["W85","W87"]}
+];
+const QF=[
+ {n:97,date:"Thu Jul 9",ct:"3:00 PM",et:"4:00 PM",v:"Gillette Stadium, Foxborough",s:["W89","W90"]},
+ {n:98,date:"Fri Jul 10",ct:"2:00 PM",et:"3:00 PM",v:"SoFi Stadium, Inglewood",s:["W93","W94"]},
+ {n:99,date:"Sat Jul 11",ct:"4:00 PM",et:"5:00 PM",v:"Hard Rock Stadium, Miami",s:["W91","W92"]},
+ {n:100,date:"Sat Jul 11",ct:"8:00 PM",et:"9:00 PM",v:"Arrowhead Stadium, Kansas City",s:["W95","W96"]}
+];
+const SF=[
+ {n:101,date:"Tue Jul 14",ct:"2:00 PM",et:"3:00 PM",v:"AT&T Stadium, Arlington (Dallas)",s:["W97","W98"]},
+ {n:102,date:"Wed Jul 15",ct:"2:00 PM",et:"3:00 PM",v:"Mercedes-Benz Stadium, Atlanta",s:["W99","W100"]}
+];
+const FIN=[
+ {n:103,date:"Sat Jul 18",ct:"4:00 PM",et:"5:00 PM",v:"Hard Rock Stadium, Miami",s:["L101","L102"],label:"Third-place playoff"},
+ {n:104,date:"Sun Jul 19",ct:"2:00 PM",et:"3:00 PM",v:"MetLife Stadium, East Rutherford NJ",s:["W101","W102"],label:"Final"}
+];
+
+function teamChip(c,proj){
+  return `<span class="flag">${FLAG[c]}</span>${NAME[c]}${proj?'<span class="proj">proj</span>':''}`;
+}
+function r32SlotHTML(slot){
+  if(slot.t==="3") return `<div class="slot"><span class="lab">${slot.l}</span></div>`;
+  const g=slot.g; const team=slot.t==="W"?winner(g):runnerUp(g);
+  const locked=allFinalsSet(g);
+  const role=slot.t==="W"?"Winner":"Runner-up";
+  return `<div class="slot">${teamChip(team.c,!locked)}<span style="margin-left:auto;font-size:10px;color:var(--muted);font-family:'JetBrains Mono'">${role} ${g}</span></div>`;
+}
+function refSlotHTML(ref){
+  const kind=ref[0]==="W"?"Winner":"Loser"; const num=ref.slice(1);
+  return `<div class="slot"><span class="lab">${kind} of Match ${num}</span></div>`;
+}
+function matchCard(m,kind){
+  let body;
+  if(kind==="r32") body=m.s.map(r32SlotHTML).join("");
+  else body=m.s.map(refSlotHTML).join("");
+  const title=m.label?`<span class="mno">${m.label} · M${m.n}</span>`:`<span class="mno">Match ${m.n}</span>`;
+  return `<div class="mcard">
+    <div class="mtop">${title}<span class="mtime">${m.ct} CT<br><span class="et">${m.et} ET</span></span></div>
+    <div class="mbody">${body}</div>
+    <div class="vline"></div>
+    <div class="mvenue">📍 ${m.v} · ${m.date}</div>
+  </div>`;
+}
+function roundBlock(title,dates,list,kind){
+  return `<div class="round">
+    <div class="rhead"><h2>${title}</h2><span class="rdate">${dates}</span></div>
+    <div class="bgrid">${list.map(m=>matchCard(m,kind)).join("")}</div>
+  </div>`;
+}
+function renderBracket(){
+  document.getElementById("bracketSchedule").innerHTML=
+    roundBlock("Round of 32","Jun 28 – Jul 3",R32,"r32")+
+    roundBlock("Round of 16","Jul 4 – Jul 7",R16,"ref")+
+    roundBlock("Quarterfinals","Jul 9 – Jul 11",QF,"ref")+
+    roundBlock("Semifinals","Jul 14 – Jul 15",SF,"ref")+
+    roundBlock("Final stage","Jul 18 – Jul 19",FIN,"ref");
+}
+
+/* ---------- RENDER: BRACKET TREE ---------- */
+const KO_META={};
+[].concat(R32,R16,QF,SF,FIN).forEach(m=>KO_META[m.n]=m);
+const CHILDREN={104:[101,102],101:[97,98],102:[99,100],
+ 97:[89,90],98:[93,94],99:[91,92],100:[95,96],
+ 89:[74,77],90:[73,75],93:[83,84],94:[81,82],91:[76,78],92:[79,80],95:[86,88],96:[85,87]};
+const NEXTMAP={};
+Object.entries(CHILDREN).forEach(([p,ch])=>ch.forEach(c=>NEXTMAP[c]=+p));
+
+function slotMini(slot){
+  if(slot.t==="3") return `<div class="kpp lab">${slot.l}</div>`;
+  const g=slot.g; const team=slot.t==="W"?winner(g):runnerUp(g);
+  const locked=allFinalsSet(g); const role=slot.t==="W"?"Winner":"Runner-up";
+  return `<div class="kpp" title="${NAME[team.c]} — ${role} ${g}"><span class="flag">${FLAG[team.c]}</span>${team.c}${locked?"":'<span class="proj">proj</span>'}</div>`;
+}
+function koParticipants(n){
+  if(!CHILDREN[n]) return KO_META[n].s.map(slotMini).join("");
+  return CHILDREN[n].map(c=>`<div class="kpp lab">Winner · M${c}</div>`).join("");
+}
+function koCard(n){
+  const m=KO_META[n]; const fin=n===104?" kfinal":"";
+  return `<div class="kcard${fin}" data-m="${n}">
+    <div class="kctop"><span class="kn">${n===104?"FINAL · M104":"M"+n}</span><span class="kt">${m.ct} CT</span></div>
+    ${koParticipants(n)}
+  </div>`;
+}
+function buildNode(n){
+  if(!CHILDREN[n]) return `<div class="knode leaf"><div class="kself">${koCard(n)}</div></div>`;
+  const [a,b]=CHILDREN[n];
+  return `<div class="knode"><div class="kchildren">${buildNode(a)}${buildNode(b)}</div><div class="kself">${koCard(n)}</div></div>`;
+}
+function renderTree(){
+  const m3=KO_META[103];
+  document.getElementById("bracketTree").innerHTML=
+   `<p class="tracehint">Tap any match to trace its route to the final. Tap it again to clear. Round of 32 names fill in from your group results.</p>
+    <div class="tree-scroll"><div class="tree" id="treeRoot">${buildNode(104)}</div></div>
+    <div class="third-card">
+      <div class="kcard" data-m="103">
+        <div class="kctop"><span class="kn">3RD PLACE · M103</span><span class="kt">${m3.ct} CT</span></div>
+        <div class="kpp lab">Loser · M101</div>
+        <div class="kpp lab">Loser · M102</div>
+      </div>
+      <span class="lblnote">${m3.date} · ${m3.v}</span>
+    </div>`;
+  applyTrace();
+}
+let traceRoot=null;
+function pathOf(m){const p=[m]; let c=m; while(NEXTMAP[c]!=null){c=NEXTMAP[c]; p.push(c);} return p;}
+function applyTrace(){
+  const tree=document.getElementById("treeRoot");
+  const cards=document.querySelectorAll("#bracketTree .kcard");
+  cards.forEach(c=>c.classList.remove("hl"));
+  if(traceRoot==null){ if(tree)tree.classList.remove("tracing"); return; }
+  const set=new Set(pathOf(traceRoot));
+  cards.forEach(c=>{ if(set.has(+c.dataset.m)) c.classList.add("hl"); });
+  if(tree)tree.classList.add("tracing");
+}
+
+/* ---------- RENDER ALL ---------- */
+function renderAll(){renderGroups();renderThirds();renderTree();renderBracket();}
+
+/* ---------- EVENTS ---------- */
+document.getElementById("groups").addEventListener("click",e=>{
+  const step=e.target.closest(".stepper button");
+  if(step){
+    const wrap=step.closest(".stepper"); const key=wrap.dataset.key; const which=wrap.dataset.which;
+    const act=step.dataset.act;
+    if(!STATE[key]) STATE[key]={hg:null,ag:null};
+    let cur=STATE[key][which]; if(cur==null)cur=0;
+    if(act==="inc")cur=Math.min(12,cur+1); else cur=Math.max(0,cur-1);
+    STATE[key][which]=cur;
+    // ensure both sides defined so match counts
+    const other=which==="hg"?"ag":"hg";
+    if(STATE[key][other]==null) STATE[key][other]=0;
+    renderAll(); flashGroup(key.split("-")[0]);
+    return;
+  }
+  const clr=e.target.closest("[data-clear]");
+  if(clr){const key=clr.dataset.clear; STATE[key]={hg:null,ag:null}; renderAll();}
+});
+function flashGroup(g){
+  // subtle pulse on the group's table rows
+  const cards=document.querySelectorAll(".gcard");
+  cards.forEach(c=>{ if(c.querySelector(".glabel")?.textContent.trim()==="Group "+g){
+    c.querySelectorAll("tbody tr").forEach(tr=>{tr.classList.remove("pulse");void tr.offsetWidth;tr.classList.add("pulse");});
+  }});
+}
+
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected","false"));
+    t.setAttribute("aria-selected","true");
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    document.getElementById("view-"+t.dataset.view).classList.add("active");
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+});
+
+document.querySelectorAll(".kotoggle button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".kotoggle button").forEach(x=>x.setAttribute("aria-pressed","false"));
+  b.setAttribute("aria-pressed","true");
+  const tree=b.dataset.ko==="tree";
+  document.getElementById("bracketTree").style.display=tree?"":"none";
+  document.getElementById("bracketSchedule").style.display=tree?"none":"";
+}));
+document.addEventListener("click",e=>{
+  const card=e.target.closest("#bracketTree .kcard");
+  if(!card) return;
+  const m=+card.dataset.m;
+  traceRoot=(traceRoot===m)?null:m;
+  applyTrace();
+});
+
+document.getElementById("clearall").addEventListener("click",()=>{
+  Object.keys(STATE).forEach(k=>delete STATE[k]); renderAll();
+});
+document.getElementById("autofill").addEventListener("click",()=>{
+  Object.keys(GROUPS).forEach(g=>{
+    const G=GROUPS[g];
+    G.finals.forEach((f,i)=>{
+      const t=tableFor(g); const map={}; t.forEach(r=>map[r.c]=r);
+      const hp=map[f.h].pts, ap=map[f.a].pts;
+      let hg,ag;
+      if(hp>ap){hg=1;ag=0;} else if(ap>hp){hg=0;ag=1;} else {hg=1;ag=1;}
+      STATE[g+"-"+i]={hg,ag};
+    });
+  });
+  renderAll();
+});
+
+renderAll();
+</script>
+</body>
+</html>
