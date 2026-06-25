@@ -526,7 +526,6 @@ function thirdsRanked(){
   list.forEach((r,i)=>r.in=i<8);
   return list;
 }
-function allFinalsSet(g){return GROUPS[g].finals.every((f,i)=>{if(f.res)return true;const s=STATE[g+"-"+i];return s&&s.hg!=null&&s.ag!=null;});}
 
 /* ---------- RENDER: GROUPS ---------- */
 function railClass(pos){return pos<=2?"p"+pos:pos===3?"p3":"p4";}
@@ -682,7 +681,7 @@ function teamChip(c,proj){
 function r32SlotHTML(slot){
   if(slot.t==="3") return `<div class="slot"><span class="lab">${slot.l}</span></div>`;
   const g=slot.g; const team=slot.t==="W"?winner(g):runnerUp(g);
-  const locked=allFinalsSet(g);
+  const locked=!!GROUPS[g].locked;
   const role=slot.t==="W"?"Winner":"Runner-up";
   const seed=(slot.t==="W"?"1":"2")+g;
   return `<div class="slot">${teamChip(team.c,!locked)}<span class="seed">(${seed})</span><span style="margin-left:auto;font-size:10px;color:var(--muted);font-family:'JetBrains Mono'">${role} ${g}</span></div>`;
@@ -730,7 +729,7 @@ Object.entries(CHILDREN).forEach(([p,ch])=>ch.forEach(c=>NEXTMAP[c]=+p));
 function slotMini(slot){
   if(slot.t==="3") return `<div class="kpp lab">${slot.l}</div>`;
   const g=slot.g; const team=slot.t==="W"?winner(g):runnerUp(g);
-  const locked=allFinalsSet(g); const role=slot.t==="W"?"Winner":"Runner-up";
+  const locked=!!GROUPS[g].locked; const role=slot.t==="W"?"Winner":"Runner-up";
   const seed=(slot.t==="W"?"1":"2")+g;
   return `<div class="kpp" title="${NAME[team.c]} — ${role} ${g}"><span class="flag">${FLAG[team.c]}</span>${team.c}<span class="seed">(${seed})</span>${locked?"":'<span class="proj">proj</span>'}</div>`;
 }
