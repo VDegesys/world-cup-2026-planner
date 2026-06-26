@@ -156,6 +156,8 @@
   table.thirds tr.cut td{border-bottom:2px solid var(--ink)}
   .rk{color:var(--muted); font-family:'JetBrains Mono',monospace; width:30px}
   .instag{font-size:10px; font-weight:700; text-transform:uppercase; color:var(--amber); margin-left:8px}
+  table.thirds td.prov{color:var(--muted)}
+  .toplay{font-size:8.5px; font-weight:700; text-transform:uppercase; color:var(--green); background:var(--green-soft); padding:1px 5px; border-radius:4px; margin-left:6px; letter-spacing:.03em; vertical-align:middle}
 
   /* Bracket */
   .round{margin-bottom:26px}
@@ -278,7 +280,7 @@
   <section class="view" id="view-thirds">
     <div class="thirds-wrap">
       <h2 style="font-family:Oswald;text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px">Best third-placed teams</h2>
-      <p class="note">Eight of the twelve third-placed teams advance to the Round of 32, ranked across all groups by points, then goal difference, then goals scored. The line below 8th is the cut. Five are already locked: Sweden, Ecuador and Bosnia sit pretty on four points, while South Korea and Scotland cling to the last spots on three. Rule of thumb — four points is all but safe, three is a goal-difference coin-flip. Update group results to see who slips in.</p>
+      <p class="note">Eight of the twelve third-placed teams advance to the Round of 32, ranked across all groups by points, then goal difference, then goals scored. The line below 8th is the cut. Five are already locked: Sweden, Ecuador and Bosnia sit pretty on four points, while South Korea and Scotland cling to the last spots on three. Rule of thumb — four points is all but safe, three is a goal-difference coin-flip. The <b>P</b> column shows games played: a green <b>live</b> tag flags a team whose group is not yet finished, so its tally can still move. Update group results to see who slips in.</p>
       <div id="thirds"></div>
     </div>
   </section>
@@ -630,14 +632,16 @@ function renderThirds(){
   const list=thirdsRanked();
   let rows=list.map((r,i)=>{
     const cls=r.in?"in":"out"; const cut=i===7?"cut":"";
+    const final=!!GROUPS[r.g].locked;
     return `<tr class="${cls} ${cut}">
       <td class="rk">${i+1}</td>
       <td class="l"><span class="flag">${FLAG[r.c]}</span>${NAME[r.c]} <span style="color:var(--muted);font-weight:500">(${r.g})</span>${r.in?'<span class="instag">In</span>':''}</td>
+      <td class="${final?'':'prov'}">${r.p}${final?'':'<span class="toplay">live</span>'}</td>
       <td>${r.pts}</td><td>${r.gd>0?"+":""}${r.gd}</td><td>${r.gf}</td>
     </tr>`;
   }).join("");
   root.innerHTML=`<table class="thirds">
-    <thead><tr><th class="l" colspan="2">Third-placed team</th><th>Pts</th><th>GD</th><th>GF</th></tr></thead>
+    <thead><tr><th class="l" colspan="2">Third-placed team</th><th>P</th><th>Pts</th><th>GD</th><th>GF</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
 
