@@ -209,6 +209,16 @@
   .third-card .kcard{cursor:default}
   .third-card .kcard:hover{box-shadow:var(--shadow)}
   .third-card .lblnote{font-size:12px; color:var(--muted)}
+  /* knockout winner picking */
+  .kpp.pick{cursor:pointer}
+  .kpp.pick:hover{background:#eef7f1}
+  .kpp.kwin{background:var(--green-soft); box-shadow:inset 3px 0 0 var(--green); font-weight:800}
+  .kpp.kwin .kchk{margin-left:auto; color:var(--green); font-weight:800; font-family:Inter}
+  .kpp.kwin .proj{margin-left:6px}
+  .slot.pick{cursor:pointer; border-radius:7px; margin:0 -6px; padding-left:6px; padding-right:6px}
+  .slot.pick:hover{background:#eef7f1}
+  .slot.winsel{background:var(--green-soft); box-shadow:inset 3px 0 0 var(--green)}
+  .slot.winsel .role{color:var(--green); font-weight:700}
 
   footer{padding:24px 0 50px; color:var(--muted); font-size:12px; border-top:1px solid var(--line)}
   footer a{color:var(--green)}
@@ -275,7 +285,7 @@
 
   <section class="view" id="view-bracket">
     <div class="bracket-note">
-      <b>How to read this:</b> winners and runners-up fill in automatically from your group results (a <span style="color:var(--green);font-weight:700">PROJ</span> tag means it follows the current scenario and is not yet mathematically locked). Third-place slots stay as labels, because which specific third-placed team lands in each slot depends on FIFA's fixed lookup of the eight groups that qualify. All times shown in <b>Central (CT)</b> with Eastern (ET) beneath.
+      <b>How to read this:</b> the Round of 32 fills in automatically from your group results (a <span style="color:var(--green);font-weight:700">PROJ</span> tag means it follows the current scenario and is not yet mathematically locked). Third-place slots stay as labels, because which specific third-placed team lands in each slot depends on FIFA's fixed lookup of the eight groups that qualify. <b>Scores don't matter in the knockouts</b> — just <b>tap a team to advance them</b> to the next round, and their pick carries all the way to the final. All times shown in <b>Central (CT)</b> with Eastern (ET) beneath.
     </div>
     <div class="kotoggle">
       <button data-ko="tree" aria-pressed="true">Bracket</button>
@@ -678,22 +688,15 @@ const FIN=[
 function teamChip(c,proj){
   return `<span class="flag">${FLAG[c]}</span>${NAME[c]}${proj?'<span class="proj">proj</span>':''}`;
 }
-function r32SlotHTML(slot){
-  if(slot.t==="3") return `<div class="slot"><span class="lab">${slot.l}</span></div>`;
-  const g=slot.g; const team=slot.t==="W"?winner(g):runnerUp(g);
-  const locked=!!GROUPS[g].locked;
-  const role=slot.t==="W"?"Winner":"Runner-up";
-  const seed=(slot.t==="W"?"1":"2")+g;
-  return `<div class="slot">${teamChip(team.c,!locked)}<span class="seed">(${seed})</span><span style="margin-left:auto;font-size:10px;color:var(--muted);font-family:'JetBrains Mono'">${role} ${g}</span></div>`;
-}
-function refSlotHTML(ref){
-  const kind=ref[0]==="W"?"Winner":"Loser"; const num=ref.slice(1);
-  return `<div class="slot"><span class="lab">${kind} of Match ${num}</span></div>`;
+function koSlotHTML(p,n,win){
+  if(p.kind==="tbd") return `<div class="slot"><span class="lab">${p.loser?"Loser":"Winner"} of Match ${p.from}</span></div>`;
+  const w=win?" winsel":"";
+  if(p.kind==="third") return `<div class="slot pick${w}" data-pick="${n}" data-pid="3:${p.text}"><span class="lab">${p.text}</span><span class="role" style="margin-left:auto;font-size:10px;font-family:'JetBrains Mono'">${win?"advances":"3rd place"}</span></div>`;
+  return `<div class="slot pick${w}" data-pick="${n}" data-pid="T:${p.c}">${teamChip(p.c,p.proj)}<span class="seed">(${p.seed})</span><span class="role" style="margin-left:auto;font-size:10px;color:var(--muted);font-family:'JetBrains Mono'">${win?"advances":p.role}</span></div>`;
 }
 function matchCard(m,kind){
-  let body;
-  if(kind==="r32") body=m.s.map(r32SlotHTML).join("");
-  else body=m.s.map(refSlotHTML).join("");
+  const tok=KO[m.n];
+  const body=participantsOf(m.n).map(p=>koSlotHTML(p,m.n,partId(p)!=null&&partId(p)===tok)).join("");
   const title=m.label?`<span class="mno">${m.label} · M${m.n}</span>`:`<span class="mno">Match ${m.n}</span>`;
   return `<div class="mcard">
     <div class="mtop">${title}<span class="mtime">${m.ct} CT<br><span class="et">${m.et} ET</span></span></div>
@@ -726,16 +729,49 @@ const CHILDREN={104:[101,102],101:[97,98],102:[99,100],
 const NEXTMAP={};
 Object.entries(CHILDREN).forEach(([p,ch])=>ch.forEach(c=>NEXTMAP[c]=+p));
 
-function slotMini(slot){
-  if(slot.t==="3") return `<div class="kpp lab">${slot.l}</div>`;
-  const g=slot.g; const team=slot.t==="W"?winner(g):runnerUp(g);
-  const locked=!!GROUPS[g].locked; const role=slot.t==="W"?"Winner":"Runner-up";
-  const seed=(slot.t==="W"?"1":"2")+g;
-  return `<div class="kpp" title="${NAME[team.c]} — ${role} ${g}"><span class="flag">${FLAG[team.c]}</span>${team.c}<span class="seed">(${seed})</span>${locked?"":'<span class="proj">proj</span>'}</div>`;
+/* ---------- KNOCKOUT WINNERS ---------- */
+/* KO[matchNum] = partId of the participant the user picked to advance.
+   Scores don't matter in the knockouts — the winner is simply selected. */
+const KO={};
+function partId(p){return p.kind==="team"?"T:"+p.c:p.kind==="third"?"3:"+p.text:null;}
+function participantsOf(n){
+  const slots=KO_META[n].s;
+  if(typeof slots[0]!=="string"){
+    // Round of 32: participants come straight from the group tables
+    return slots.map(slot=>{
+      if(slot.t==="3") return {kind:"third",text:slot.l};
+      const g=slot.g, team=slot.t==="W"?winner(g):runnerUp(g);
+      return {kind:"team",c:team.c,role:(slot.t==="W"?"Winner":"Runner-up")+" "+g,
+              seed:(slot.t==="W"?"1":"2")+g,proj:!GROUPS[g].locked};
+    });
+  }
+  // later rounds: each slot is the winner ("W##") or loser ("L##") of an earlier match
+  return slots.map(ref=>{
+    const num=+ref.slice(1), w=ref[0]==="W"?winnerOf(num):loserOf(num);
+    return w||{kind:"tbd",from:num,loser:ref[0]==="L"};
+  });
+}
+function winnerOf(n){
+  const tok=KO[n]; if(tok==null) return null;
+  return participantsOf(n).find(p=>partId(p)===tok)||null;
+}
+function loserOf(n){
+  const tok=KO[n]; if(tok==null) return null;
+  const ps=participantsOf(n), wi=ps.findIndex(p=>partId(p)===tok);
+  if(wi<0) return null;
+  const other=ps[1-wi];
+  return partId(other)!=null?other:null;
+}
+
+function koPartMini(p,n,win){
+  if(p.kind==="tbd") return `<div class="kpp lab">${p.loser?"Loser":"Winner"} · M${p.from}</div>`;
+  const w=win?" kwin":"", chk=win?'<span class="kchk">✓</span>':"";
+  if(p.kind==="third") return `<div class="kpp pick${w}" data-pick="${n}" data-pid="3:${p.text}">${p.text}${chk}</div>`;
+  return `<div class="kpp pick${w}" data-pick="${n}" data-pid="T:${p.c}" title="${NAME[p.c]} — ${p.role}"><span class="flag">${FLAG[p.c]}</span>${p.c}<span class="seed">(${p.seed})</span>${p.proj?'<span class="proj">proj</span>':""}${chk}</div>`;
 }
 function koParticipants(n){
-  if(!CHILDREN[n]) return KO_META[n].s.map(slotMini).join("");
-  return CHILDREN[n].map(c=>`<div class="kpp lab">Winner · M${c}</div>`).join("");
+  const tok=KO[n];
+  return participantsOf(n).map(p=>koPartMini(p,n,partId(p)!=null&&partId(p)===tok)).join("");
 }
 function koCard(n){
   const m=KO_META[n]; const fin=n===104?" kfinal":"";
@@ -752,13 +788,12 @@ function buildNode(n){
 function renderTree(){
   const m3=KO_META[103];
   document.getElementById("bracketTree").innerHTML=
-   `<p class="tracehint">Tap any match to trace its route to the final. Tap it again to clear. Round of 32 names fill in from your group results.</p>
+   `<p class="tracehint">Tap a team in any match to advance them to the next round. Tap a match's header area to trace its route to the final. Round of 32 names fill in from your group results.</p>
     <div class="tree-scroll"><div class="tree" id="treeRoot">${buildNode(104)}</div></div>
     <div class="third-card">
       <div class="kcard" data-m="103">
         <div class="kctop"><span class="kn">3RD PLACE · M103</span><span class="kt">${m3.date}<br>${m3.ct} CT</span></div>
-        <div class="kpp lab">Loser · M101</div>
-        <div class="kpp lab">Loser · M102</div>
+        ${koParticipants(103)}
       </div>
       <span class="lblnote">${m3.date} · ${m3.v}</span>
     </div>`;
@@ -842,6 +877,13 @@ document.querySelectorAll(".kotoggle button").forEach(b=>b.addEventListener("cli
   document.getElementById("bracketSchedule").style.display=tree?"none":"";
 }));
 document.addEventListener("click",e=>{
+  const pick=e.target.closest("[data-pick]");
+  if(pick){
+    const n=+pick.dataset.pick, pid=pick.dataset.pid;
+    if(KO[n]===pid) delete KO[n]; else KO[n]=pid;
+    renderAll();
+    return;
+  }
   const card=e.target.closest("#bracketTree .kcard");
   if(!card) return;
   const m=+card.dataset.m;
@@ -850,7 +892,9 @@ document.addEventListener("click",e=>{
 });
 
 document.getElementById("clearall").addEventListener("click",()=>{
-  Object.keys(STATE).forEach(k=>delete STATE[k]); renderAll();
+  Object.keys(STATE).forEach(k=>delete STATE[k]);
+  Object.keys(KO).forEach(k=>delete KO[k]);
+  renderAll();
 });
 document.getElementById("autofill").addEventListener("click",()=>{
   Object.keys(GROUPS).forEach(g=>{
