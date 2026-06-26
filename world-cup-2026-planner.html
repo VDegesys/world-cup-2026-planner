@@ -287,7 +287,7 @@
 
   <section class="view" id="view-bracket">
     <div class="bracket-note">
-      <b>How to read this:</b> the Round of 32 fills in automatically from your group results (a <span style="color:var(--green);font-weight:700">PROJ</span> tag means it follows the current scenario and is not yet mathematically locked). Third-place slots stay as labels, because which specific third-placed team lands in each slot depends on FIFA's fixed lookup of the eight groups that qualify. <b>Scores don't matter in the knockouts</b> — just <b>tap a team to advance them</b> to the next round, and their pick carries all the way to the final. All times shown in <b>Central (CT)</b> with Eastern (ET) beneath.
+      <b>How to read this:</b> the Round of 32 fills in automatically from your group results (a <span style="color:var(--green);font-weight:700">PROJ</span> tag means it follows the current scenario and is not yet mathematically locked). The third-place slots now resolve too: the eight best third-placed teams are slotted into their matches by FIFA's allocation — each slot only takes a third from its listed groups, and never one from its own group — so the names update live as scores change. <b>Scores don't matter in the knockouts</b> — just <b>tap a team to advance them</b> to the next round, and their pick carries all the way to the final. All times shown in <b>Central (CT)</b> with Eastern (ET) beneath.
     </div>
     <div class="kotoggle">
       <button data-ko="tree" aria-pressed="true">Bracket</button>
@@ -738,12 +738,58 @@ Object.entries(CHILDREN).forEach(([p,ch])=>ch.forEach(c=>NEXTMAP[c]=+p));
    Scores don't matter in the knockouts — the winner is simply selected. */
 const KO={};
 function partId(p){return p.kind==="team"?"T:"+p.c:p.kind==="third"?"3:"+p.text:null;}
+
+/* ---------- THIRD-PLACE ALLOCATION ----------
+   The eight best third-placed teams are slotted into the eight R32 third-place
+   positions following FIFA's allocation: each slot may only take a third from a
+   fixed set of groups (the "3rd · A/B/C…" label), and no slot's list contains
+   its own group winner, so a valid assignment never produces a group rematch.
+   We solve the constraint matching live, so the slots update as scores change. */
+const THIRD_SLOTS=R32.filter(m=>m.s.some(s=>s.t==="3")).map(m=>({
+  n:m.n, groups:m.s.find(s=>s.t==="3").l.replace(/^3rd · /,"").split("/")
+}));
+let _thirdCache={sig:null,map:null};
+function resolveThirds(){
+  const sig=Object.keys(GROUPS).map(groupSig).join(";");
+  if(_thirdCache.sig===sig) return _thirdCache.map;
+  const qualifying=thirdsRanked().filter(r=>r.in);          // top 8 third-placed teams
+  const byGroup={}; qualifying.forEach(r=>byGroup[r.g]=r);
+  const qGroups=qualifying.map(r=>r.g);
+  const assign={}, used=new Set();
+  // Most-constrained-first improves the odds of finding the (typically unique) matching.
+  const order=THIRD_SLOTS.map((s,i)=>({i,opts:s.groups.filter(g=>qGroups.includes(g))}))
+                         .sort((a,b)=>a.opts.length-b.opts.length).map(o=>THIRD_SLOTS[o.i]);
+  function bt(k){
+    if(k===order.length) return true;
+    const s=order[k];
+    for(const g of s.groups){
+      if(!qGroups.includes(g)||used.has(g)) continue;
+      used.add(g); assign[s.n]=g;
+      if(bt(k+1)) return true;
+      used.delete(g); delete assign[s.n];
+    }
+    return false;
+  }
+  const allLocked=Object.keys(GROUPS).every(g=>GROUPS[g].locked);
+  const map={};
+  if(qualifying.length===8 && bt(0)){
+    Object.entries(assign).forEach(([n,g])=>{map[n]={c:byGroup[g].c,g,proj:!allLocked};});
+  }
+  _thirdCache={sig,map};
+  return map;
+}
+
 function participantsOf(n){
   const slots=KO_META[n].s;
   if(typeof slots[0]!=="string"){
     // Round of 32: participants come straight from the group tables
+    const thirds=resolveThirds();
     return slots.map(slot=>{
-      if(slot.t==="3") return {kind:"third",text:slot.l};
+      if(slot.t==="3"){
+        const r=thirds[n];
+        if(r) return {kind:"team",c:r.c,role:"3rd "+r.g,seed:"3"+r.g,proj:r.proj};
+        return {kind:"third",text:slot.l};
+      }
       const g=slot.g, team=slot.t==="W"?winner(g):runnerUp(g);
       return {kind:"team",c:team.c,role:(slot.t==="W"?"Winner":"Runner-up")+" "+g,
               seed:(slot.t==="W"?"1":"2")+g,proj:!GROUPS[g].locked};
