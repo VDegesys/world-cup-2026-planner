@@ -278,7 +278,7 @@
   <section class="view" id="view-thirds">
     <div class="thirds-wrap">
       <h2 style="font-family:Oswald;text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px">Best third-placed teams</h2>
-      <p class="note">Eight of the twelve third-placed teams advance to the Round of 32. They are ranked across all groups by points, then goal difference, then goals scored. The line below 8th is the cut. Update group results to see who slips in.</p>
+      <p class="note">Eight of the twelve third-placed teams advance to the Round of 32, ranked across all groups by points, then goal difference, then goals scored. The line below 8th is the cut. Five are already locked: Sweden, Ecuador and Bosnia sit pretty on four points, while South Korea and Scotland cling to the last spots on three. Rule of thumb — four points is all but safe, three is a goal-difference coin-flip. Update group results to see who slips in.</p>
       <div id="thirds"></div>
     </div>
   </section>
@@ -373,11 +373,11 @@ const PREVIEWS={
      `${FLAG.SCO} <b>Scotland</b> guarantee a top-two place by beating Brazil, and a win could even shove Brazil down to third. A draw most likely means sweating the best-third table on 4 points (around 70 percent per Opta). A loss leaves them in real danger on 3.`,
      `${FLAG.BRA} <b>Brazil</b> go through with a win or a draw. To stay top they must match Morocco's result or protect their two-goal cushion.`,
      `${FLAG.MAR} <b>Morocco</b> advance with a win or a draw over Haiti. To steal first they must better Brazil's result, or beat Haiti by enough to overturn Brazil's two-goal lead in goal difference, then goals scored.`]},
- D:{story:"USA have stormed through as group winners and Türkiye are out, so the USA game is a free hit. Second place is a straight duel between Australia and Paraguay, who meet head to head.",
+ D:{story:"USA have stormed through as group winners and Türkiye are out, so the USA game is a free hit. Second place is a straight shoot-out between Australia and Paraguay, who meet head to head — and the loser is tipped straight into the best-third scramble.",
     lines:[
      `${FLAG.USA} <b>USA</b> are already group winners and will rotate against an eliminated Türkiye side.`,
      `${FLAG.AUS} <b>Australia</b> reach the knockouts with a win or a draw against Paraguay. Their goal-difference edge means a point is enough for second.`,
-     `${FLAG.PAR} <b>Paraguay</b> must beat Australia to grab second. A draw sends them out, though it could leave them in the best-third mix.`]},
+     `${FLAG.PAR} <b>Paraguay</b> must beat Australia to grab second. A draw drops them to third on four points — a live best-third ticket — but a defeat leaves them on three, squarely on the goal-difference bubble alongside Korea and Scotland.`]},
  E:{story:"Germany's firepower (seven past Curaçao) has the group sewn up. Ivory Coast hold second for now, but Curaçao can flip it.",
     lines:[
      `${FLAG.GER} <b>Germany</b> are through as winners and just need to avoid a collapse against Ecuador to stay top.`,
@@ -389,36 +389,36 @@ const PREVIEWS={
      `${FLAG.NED} <b>Netherlands</b> top the group by beating Tunisia. If they and Japan both win, first comes down to goal difference, then goals scored, where the Dutch lead by one.`,
      `${FLAG.JPN} <b>Japan</b> reach the knockouts with a win or a draw against Sweden, and can top the group with a big win.`,
      `${FLAG.SWE} <b>Sweden</b> must beat Japan to climb into the top two, and even then will be checking the Dutch result.`]},
- G:{story:"The tightest group on the board. Egypt lead the way, but Belgium have stumbled to two draws and second place is wide open.",
+ G:{story:"The tightest group on the board, and one where third place may still be worth having: Egypt lead the way, but Belgium have stumbled to two draws and second is wide open.",
     lines:[
      `${FLAG.EGY} <b>Egypt</b> reach the knockouts with a win or a draw against Iran, and top the group with a win.`,
-     `${FLAG.BEL} <b>Belgium</b> need to beat New Zealand to feel safe. Their two draws leave them exposed if Iran win.`,
-     `${FLAG.IRN} <b>Iran</b> can vault the group with a win over Egypt. A draw keeps them alive but dependent on the Belgium result.`,
-     `${FLAG.NZL} <b>New Zealand</b> must beat Belgium to have any chance, most likely through the best-third places.`]},
- H:{story:"Spain control the group and have a clear incentive to win it: topping the group steers them away from Argentina in the Round of 32. Cape Verde, who held Spain to a draw, are the surprise package.",
+     `${FLAG.BEL} <b>Belgium</b> need to beat New Zealand to feel safe. Their two draws leave them exposed — lose, and even third place likely will not save them on two points.`,
+     `${FLAG.IRN} <b>Iran</b> can vault into the top two with a win over Egypt. A draw most likely leaves them third on three points, then sweating the goal-difference cut.`,
+     `${FLAG.NZL} <b>New Zealand</b> must beat Belgium to have any chance, and would still need a best-third place to go with it.`]},
+ H:{story:"All eyes on Guadalajara, where the stakes are brutal: the runner-up here drops onto Argentina's side of the draw and a Round-of-32 date with Messi, so topping the group is everything. Spain hold the whip hand; Cape Verde, who held them to a draw, are the fairytale still very much alive.",
     lines:[
-     `${FLAG.ESP} <b>Spain</b> top the group with a win or a draw against Uruguay, which would let them avoid Argentina's side of the bracket.`,
-     `${FLAG.CPV} <b>Cape Verde</b> seize second by beating Saudi Arabia, a fairytale for the debutants.`,
-     `${FLAG.URU} <b>Uruguay</b> most likely must beat Spain to be sure of advancing. A draw leaves them at the mercy of the Cape Verde result.`]},
+     `${FLAG.ESP} <b>Spain</b> top the group with a win or a draw against Uruguay — and badly need to, because first place sidesteps Argentina, while a shock defeat could tumble them into the runner-up slot opposite Messi, or even into a best-third scramble.`,
+     `${FLAG.CPV} <b>Cape Verde</b> seize second by beating Saudi Arabia, a debutant fairytale — though finishing second hands them Argentina, so a third-place finish that still banks a best-third slot would draw a softer group winner instead.`,
+     `${FLAG.URU} <b>Uruguay</b> most likely must beat Spain to be sure of advancing. Win and they can top the group; settle for second and Argentina await.`]},
  I:{story:"Both France and Norway are already through, so Foxborough is a blockbuster purely for first place. France lead on goal difference, Norway on goals scored, and Mbappé has four goals and counting.",
     lines:[
      `${FLAG.FRA} <b>France</b> top the group with a win or a draw. Their superior goal difference settles a draw in their favour.`,
      `${FLAG.NOR} <b>Norway</b> must beat France to top the group and back up their dark-horse billing.`,
-     `${FLAG.SEN} ${FLAG.IRQ} <b>Senegal</b> and <b>Iraq</b> are out of the automatic places and realistically playing for pride.`]},
- J:{story:"Argentina and Messi have already won the group, so Argentina versus Jordan is a dead rubber. The real fixture is a winner-takes-second showdown between Austria and Algeria.",
+     `${FLAG.SEN} ${FLAG.IRQ} <b>Senegal</b> and <b>Iraq</b>, both still pointless, meet only for pride: even the winner's three points would carry a goal difference far too weak to threaten the best-third cut.`]},
+ J:{story:"The strangest equation at the tournament. Argentina have won the group, so Argentina–Jordan is a dead rubber — but Austria versus Algeria is loaded, because the runner-up is ticketed to face the Group H winner, on current form Spain. Win this mini-final and your prize is La Roja; finish third and a best-third place could mean a far softer group winner instead. Forty-four years on, Austria and Algeria meeting with mutual reasons not to win carries a heavy echo of the 1982 Disgrace of Gijón.",
     lines:[
      `${FLAG.ARG} <b>Argentina</b> are through as winners and can rotate against an eliminated Jordan.`,
-     `${FLAG.AUT} ${FLAG.DZA} <b>Austria</b> and <b>Algeria</b> meet head to head for second. The winner advances; a draw sends Austria through on goal difference, so Algeria must win.`]},
- K:{story:"Colombia are flying and already safe, and Portugal, with Ronaldo rewriting the record books, are essentially through too. Their meeting in Miami is about first place.",
+     `${FLAG.AUT} ${FLAG.DZA} <b>Austria</b> and <b>Algeria</b> meet head to head for second. A draw sends Austria through on goal difference, so Algeria must win to take the runner-up spot — yet runner-up means Spain, so both might quietly prefer third and a best-third gamble. The catch: level on three points apiece, the loser sits right on the elimination bubble, so there is no safe way to dodge the giant.`]},
+ K:{story:"Colombia are flying and already safe, and Portugal, with Ronaldo rewriting the record books, are essentially through too. Their meeting in Miami is about first place — while DR Congo chase a back-door best-third place behind them.",
     lines:[
      `${FLAG.COL} <b>Colombia</b> top the group with a win or a draw against Portugal.`,
      `${FLAG.POR} <b>Portugal</b> must beat Colombia to leapfrog them for first. Either way they are all but qualified.`,
-     `${FLAG.COD} <b>DR Congo</b> are mathematically alive but would need to beat Uzbekistan and get plenty of help.`]},
- L:{story:"Tuchel's England sit top and should confirm it against an already-eliminated Panama. Ghana, level with England after a battling goalless draw, face a Croatia side fighting for its tournament life.",
+     `${FLAG.COD} <b>DR Congo</b> keep their hopes alive by beating Uzbekistan: four points would put them right in the best-third conversation, where four is close to safe.`]},
+ L:{story:"Tuchel's England sit top and should confirm it against an already-eliminated Panama. The drama is in Philadelphia, where Ghana and Croatia collide — with a best-third lifeline waiting for whoever falls short.",
     lines:[
      `${FLAG.ENG} <b>England</b> should top the group by beating Panama. Only a slip, with Ghana winning big, would cost them first.`,
-     `${FLAG.GHA} <b>Ghana</b> advance with a win or a draw against Croatia.`,
-     `${FLAG.CRO} <b>Croatia</b> and Modrić must beat Ghana to go through. Anything less and they are out.`]}
+     `${FLAG.GHA} <b>Ghana</b> advance with a win or a draw against Croatia. Even a defeat would only drop them to third on four points — likely enough for a best-third reprieve.`,
+     `${FLAG.CRO} <b>Croatia</b> and Modrić must beat Ghana to grab second outright. A draw leaves them third on four points and sweating the best-third cut; a defeat sends them home.`]}
 };
 
 // scenario scores keyed "GROUP-0" / "GROUP-1" -> {hg, ag}
